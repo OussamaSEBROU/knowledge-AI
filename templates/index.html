@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge AI | Study Sanctuary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #020617; 
+            color: #f8fafc; 
+            overflow: hidden; 
+        }
+        
+        .glass { 
+            background: rgba(30, 41, 59, 0.4); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+
+        .sidebar-glass { 
+            background: rgba(15, 23, 42, 0.9); 
+            border-right: 1px solid rgba(255, 255, 255, 0.05); 
+        }
+        
+        /* 3D Touch/Hover Flashcard Effects */
+        .card-3d-container {
+            perspective: 1000px;
+        }
+        
+        .card-3d {
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-3d:hover {
+            transform: translateY(-12px) rotateX(8deg) rotateY(-4deg);
+            box-shadow: 0 30px 60px -12px rgba(99, 102, 241, 0.4);
+            border-color: rgba(99, 102, 241, 0.6);
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        /* Study Sanctuary Glow */
+        .glow-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex h-screen" x-data="knowledgeApp()">
+
+    <!-- Glow Effect -->
+    <div class="glow-bg"></div>
+
+    <!-- Sidebar -->
+    <aside class="w-80 sidebar-glass p-10 flex flex-col justify-between hidden lg:flex z-10">
+        <div>
+            <div class="flex items-center gap-4 mb-16">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/30">
+                    <span class="font-extrabold text-white text-xl">Κ</span>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-tight leading-none">KNOWLEDGE</h1>
+                    <span class="text-xs text-indigo-400 font-bold tracking-widest">AI CORE v2.5</span>
+                </div>
+            </div>
+            
+            <nav class="space-y-8">
+                <div class="group">
+                    <span class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] block mb-3">Intelligence</span>
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-3 text-slate-300 hover:text-white transition cursor-pointer text-sm">
+                            <div class="w-1 h-1 rounded-full bg-indigo-500"></div> Research Mode
+                        </li>
+                        <li class="flex items-center gap-3 text-slate-500 hover:text-white transition cursor-pointer text-sm">
+                            <div class="w-1 h-1 rounded-full bg-slate-700"></div> Multimodal Logic
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="group">
+                    <span class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] block mb-3">Developer</span>
+                    <div class="p-4 glass rounded-2xl border-indigo-500/20">
+                        <p class="text-xs text-indigo-400 font-bold">Oussama SEBROU</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Elite System Architect</p>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="space-y-6">
+            <div class="flex justify-between items-center text-[10px] font-black tracking-widest text-slate-500 border-t border-slate-800 pt-6">
+                <span>LOCALIZATION</span>
+                <div class="flex gap-2">
+                    <span class="text-indigo-400 cursor-pointer">EN</span>
+                    <span>/</span>
+                    <span class="hover:text-white cursor-pointer transition">AR</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col relative z-10">
+        <!-- Top Nav -->
+        <header class="h-24 flex items-center justify-between px-12">
+            <div class="text-[11px] font-black tracking-[0.4em] text-slate-500 uppercase">Study Sanctuary</div>
+            
+            <div class="flex items-center gap-6">
+                <label class="group relative cursor-pointer px-8 py-3 rounded-full bg-indigo-600 text-white text-[11px] font-black tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
+                    ASSIMILATE MEDIA
+                    <input type="file" @change="handleFileUpload" class="hidden" accept=".pdf,video/*,audio/*,image/*">
+                </label>
+            </div>
+        </header>
+
+        <!-- Dynamic 3D Flashcards Area -->
+        <div class="px-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10" x-show="flashcards.length > 0">
+            <template x-for="card in flashcards">
+                <div class="card-3d-container">
+                    <div class="glass p-8 rounded-3xl card-3d h-full">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em]">Key Concept</span>
+                            <div class="w-2 h-2 rounded-full bg-indigo-500/40"></div>
+                        </div>
+                        <h3 class="text-sm font-extrabold text-white mb-3" x-text="card.title"></h3>
+                        <p class="text-xs text-slate-400 leading-relaxed font-light" x-text="card.description"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Chat Workspace -->
+        <div class="flex-1 overflow-y-auto px-12 pb-48 space-y-10 scroll-smooth" id="chat-window">
+            <template x-for="msg in messages">
+                <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                    <div :class="msg.role === 'user' ? 'bg-indigo-600/10 border border-indigo-500/20 rounded-t-3xl rounded-bl-3xl' : 'glass rounded-t-3xl rounded-br-3xl'" 
+                         class="max-w-3xl p-8 shadow-2xl border border-white/5">
+                        <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-4" x-text="msg.role === 'user' ? 'Inquiry' : 'Researcher Response'"></div>
+                        <p class="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap font-light" x-text="msg.text"></p>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Loading State -->
+            <div x-show="loading" class="flex justify-start">
+                <div class="glass p-6 rounded-3xl flex items-center gap-4">
+                    <div class="flex gap-1">
+                        <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
+                        <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    </div>
+                    <span class="text-[10px] font-bold tracking-widest text-indigo-400 uppercase">Analyzing manuscript depths...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Command Bar -->
+        <div class="absolute bottom-10 left-0 right-0 px-12">
+            <div class="max-w-4xl mx-auto relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                <input 
+                    type="text" 
+                    x-model="userInput" 
+                    @keydown.enter="sendQuery"
+                    placeholder="Enter deep inquiry into the assimilated manuscript..."
+                    class="relative w-full bg-slate-900/90 border border-slate-800/50 rounded-full py-6 px-10 focus:outline-none focus:border-indigo-500/50 transition-all text-sm text-slate-100 placeholder-slate-600 shadow-2xl backdrop-blur-xl"
+                >
+                <button @click="sendQuery" class="absolute right-4 top-4 bg-indigo-600 p-3 rounded-full hover:bg-indigo-500 transition-all shadow-xl active:scale-90">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function knowledgeApp() {
+            return {
+                userInput: '', 
+                loading: false, 
+                flashcards: [],
+                messages: [{ 
+                    role: 'model', 
+                    text: 'Welcome to the Sanctuary. I am prepared to analyze your manuscripts (scanned or digital), audio recordings, or visual research. Provide media to initialize.' 
+                }],
+                
+                async handleFileUpload(e) {
+                    const file = e.target.files[0];
+                    if(!file) return;
+                    this.loading = true;
+                    
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    
+                    try {
+                        const res = await fetch('/upload', { method: 'POST', body: fd });
+                        const data = await res.json();
+                        this.flashcards = data.flashcards;
+                        this.messages.push({ 
+                            role: 'model', 
+                            text: 'Assimilation complete. I have mapped the intellectual core of this media. You may proceed with inquiry.' 
+                        });
+                    } catch (err) {
+                        this.messages.push({ role: 'model', text: 'Error: Connection to the intelligence core was interrupted.' });
+                    }
+                    this.loading = false;
+                },
+
+                async sendQuery() {
+                    if(!this.userInput.trim() || this.loading) return;
+                    
+                    const q = this.userInput;
+                    this.userInput = '';
+                    this.messages.push({ role: 'user', text: q });
+                    this.loading = true;
+                    
+                    const fd = new FormData();
+                    fd.append('query', q);
+                    
+                    try {
+                        const res = await fetch('/chat', { method: 'POST', body: fd });
+                        const data = await res.json();
+                        this.messages.push({ role: 'model', text: data.response });
+                    } catch (err) {
+                        this.messages.push({ role: 'model', text: 'The core is temporarily unavailable.' });
+                    }
+                    
+                    this.loading = false;
+                    this.$nextTick(() => { 
+                        const w = document.getElementById('chat-window');
+                        w.scrollTo({ top: w.scrollHeight, behavior: 'smooth' });
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
